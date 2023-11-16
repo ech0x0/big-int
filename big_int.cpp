@@ -4,7 +4,7 @@
 
 void big_int::realloc(size_t new_count) {
     m_count = new_count;
-    size_t* tmp = new size_t[m_count * sizeof(size_t)];
+    size_t* tmp = new size_t[m_count];
     memcpy(tmp, m_data, m_count * sizeof(size_t));
     delete[] m_data;
     m_data = tmp;
@@ -25,7 +25,7 @@ big_int::~big_int() {
 big_int::big_int(const big_int& other) {
     m_data = new size_t[other.m_count];
     m_count = other.m_count;
-    memcpy(m_data, other.m_data, m_count);
+    memcpy(m_data, other.m_data, m_count * sizeof(size_t));
     sign = 0;
 }
 
@@ -45,9 +45,9 @@ big_int& big_int::operator=(const big_int& other) {
     if (m_count != other.m_count) {
         m_count = other.m_count;
         delete[] m_data;
-        m_data = new size_t[other.m_count * sizeof(size_t)];
+        m_data = new size_t[other.m_count];
     }
-    memcpy(m_data, other.m_data, m_count);
+    memcpy(m_data, other.m_data, m_count * sizeof(size_t));
     sign = other.sign;
 
     return *this;
@@ -71,7 +71,7 @@ big_int::big_int(const int x) {
     m_data = new size_t[2];
     m_count = 2;
 
-    sign = (x >= 0);
+    sign = (x < 0);
 
     int abs_x = abs(x);
     memcpy(m_data, &abs_x, sizeof(int));
@@ -90,7 +90,7 @@ big_int::big_int(const long x) {
     m_data = new size_t[2];
     m_count = 2;
 
-    sign = (x >= 0);
+    sign = (x < 0);
 
     long abs_x = abs(x);
     memcpy(m_data, &abs_x, sizeof(long));
@@ -109,7 +109,7 @@ big_int::big_int(const long long x) {
     m_data = new size_t[2];
     m_count = 2;
 
-    sign = (x >= 0);
+    sign = (x < 0);
 
     long long abs_x = abs(x);
     memcpy(m_data, &abs_x, sizeof(long long));
@@ -129,10 +129,12 @@ big_int& big_int::operator=(const int x) {
     m_data = new size_t[2];
     m_count = 2;
 
-    sign = (x >= 0);
+    sign = (x < 0);
 
     int abs_x = abs(x);
     memcpy(m_data, &abs_x, sizeof(int));
+
+    return *this;
 }
 
 big_int& big_int::operator=(const unsigned int x) {
@@ -143,6 +145,8 @@ big_int& big_int::operator=(const unsigned int x) {
     sign = 0;
 
     memcpy(m_data, &x, sizeof(unsigned int));
+
+    return *this;
 }
 
 big_int& big_int::operator=(const long x) {
@@ -150,10 +154,12 @@ big_int& big_int::operator=(const long x) {
     m_data = new size_t[2];
     m_count = 2;
 
-    sign = (x >= 0);
+    sign = (x < 0);
 
     long abs_x = abs(x);
     memcpy(m_data, &abs_x, sizeof(long));
+
+    return *this;
 }
 
 big_int& big_int::operator=(const unsigned long x) {
@@ -164,6 +170,8 @@ big_int& big_int::operator=(const unsigned long x) {
     sign = 0;
 
     memcpy(m_data, &x, sizeof(unsigned long));
+
+    return *this;
 }
 
 big_int& big_int::operator=(const long long x) {
@@ -171,10 +179,12 @@ big_int& big_int::operator=(const long long x) {
     m_data = new size_t[2];
     m_count = 2;
 
-    sign = (x >= 0);
+    sign = (x < 0);
 
     long long abs_x = abs(x);
     memcpy(m_data, &abs_x, sizeof(long long));
+
+    return *this;
 }
 
 big_int& big_int::operator=(const unsigned long long x) {
@@ -185,6 +195,45 @@ big_int& big_int::operator=(const unsigned long long x) {
     sign = 0;
 
     memcpy(m_data, &x, sizeof(unsigned long long));
+
+    return *this;
+}
+
+void big_int::set_to_binary_string(std::string str) {
+    if (str.front() == '-') {
+        sign = 1;
+        str = str.substr(1);
+    } else sign = 0;
+
+    if (str.size() % 64 != 0) return;
+
+    m_count = str.size() / 64;
+    m_data = new size_t[m_count];
+
+    size_t i = 0;
+    while (i < str.size()) {
+        m_data[m_count - 1 - i / 64] |= size_t(str[i] - '0') << size_t(63 - i % 64);
+        ++i;
+    }
+}
+
+std::string big_int::to_binary_string() {
+    std::string str = (sign ? "-" : "");
+    for (size_t i = m_count; i >= 1; --i) {
+        for (size_t j = 64; j >= 1; --j) {
+            str += char(bool(m_data[i - 1] & (1ULL << (j - 1ULL)))) + '0';
+        }
+        str += " ";
+    }
+    return str;
+}
+
+long long big_int::to_llong() {
+    return (sign ? -1 : 1) * m_data[0];
+}
+
+unsigned long long big_int::to_ullong() {
+    return m_data[0];
 }
 
 big_int& big_int::operator++() {
@@ -223,8 +272,8 @@ static void subtract_from(size_t* dst, const size_t* src, size_t count) {
     size_t borrow = 0;
     for (size_t i = 0; i < count; ++i) {
         size_t tmp = src[i] + borrow;
-        dst[i] -= src[i];
         borrow = (tmp < borrow) + (dst[i] < tmp);
+        dst[i] -= tmp;
     }
 }
 
@@ -325,9 +374,11 @@ big_int& big_int::operator-=(const big_int& other) {
 }
 
 big_int& big_int::operator*=(const big_int& other) {
+    return *this;
 }
 
 big_int& big_int::operator/=(const big_int& other) {
+    return *this;
 }
 
 big_int operator+(big_int lhs, const big_int& rhs) {

@@ -39,10 +39,16 @@ public:
     big_int& operator=(const long long x);
     big_int& operator=(const unsigned long long x);
     big_int& operator=(const char* str);
-    big_int& operator=(const std::string str);
+    big_int& operator=(const std::string& str);
 
     const char* to_cstring();
     std::string to_string();
+
+    void set_to_binary_string(std::string str);
+    std::string to_binary_string();
+
+    long long to_llong();
+    unsigned long long to_ullong();
 
     big_int& operator++();
     big_int operator++(int);
