@@ -374,6 +374,13 @@ big_int& big_int::operator-=(const big_int& other) {
 }
 
 big_int& big_int::operator*=(const big_int& other) {
+    size_t result_count = m_count + other.m_count;
+    size_t* result_data = new size_t[result_count];
+
+    delete[] m_data;
+    m_count = result_count;
+    m_data = result_data;
+
     return *this;
 }
 
