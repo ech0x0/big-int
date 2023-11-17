@@ -1,17 +1,18 @@
 #include "big_int.hpp"
 
-#include "string.h"
+#include <limits.h>
+#include <string.h>
 
 void big_int::realloc(size_t new_count) {
     m_count = new_count;
-    size_t* tmp = new size_t[m_count];
+    size_t* tmp = new size_t[m_count]();
     memcpy(tmp, m_data, m_count * sizeof(size_t));
     delete[] m_data;
     m_data = tmp;
 }
 
 big_int::big_int() {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
     sign = 0;
 }
@@ -68,7 +69,7 @@ big_int& big_int::operator=(big_int&& other) noexcept {
 }
 
 big_int::big_int(const int x) {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = (x < 0);
@@ -78,7 +79,7 @@ big_int::big_int(const int x) {
 }
 
 big_int::big_int(const unsigned int x) {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = 0;
@@ -87,7 +88,7 @@ big_int::big_int(const unsigned int x) {
 }
 
 big_int::big_int(const long x) {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = (x < 0);
@@ -97,7 +98,7 @@ big_int::big_int(const long x) {
 }
 
 big_int::big_int(const unsigned long x) {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = 0;
@@ -106,7 +107,7 @@ big_int::big_int(const unsigned long x) {
 }
 
 big_int::big_int(const long long x) {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = (x < 0);
@@ -116,7 +117,7 @@ big_int::big_int(const long long x) {
 }
 
 big_int::big_int(const unsigned long long x) {
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = 0;
@@ -126,7 +127,7 @@ big_int::big_int(const unsigned long long x) {
 
 big_int& big_int::operator=(const int x) {
     delete[] m_data;
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = (x < 0);
@@ -139,7 +140,7 @@ big_int& big_int::operator=(const int x) {
 
 big_int& big_int::operator=(const unsigned int x) {
     delete[] m_data;
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = 0;
@@ -151,7 +152,7 @@ big_int& big_int::operator=(const unsigned int x) {
 
 big_int& big_int::operator=(const long x) {
     delete[] m_data;
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = (x < 0);
@@ -164,7 +165,7 @@ big_int& big_int::operator=(const long x) {
 
 big_int& big_int::operator=(const unsigned long x) {
     delete[] m_data;
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = 0;
@@ -176,7 +177,7 @@ big_int& big_int::operator=(const unsigned long x) {
 
 big_int& big_int::operator=(const long long x) {
     delete[] m_data;
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = (x < 0);
@@ -189,7 +190,7 @@ big_int& big_int::operator=(const long long x) {
 
 big_int& big_int::operator=(const unsigned long long x) {
     delete[] m_data;
-    m_data = new size_t[2];
+    m_data = new size_t[2]();
     m_count = 2;
 
     sign = 0;
@@ -208,7 +209,7 @@ void big_int::set_to_binary_string(std::string str) {
     if (str.size() % 64 != 0) return;
 
     m_count = str.size() / 64;
-    m_data = new size_t[m_count];
+    m_data = new size_t[m_count]();
 
     size_t i = 0;
     while (i < str.size()) {
@@ -258,6 +259,7 @@ big_int big_int::operator--(int) {
     return old;
 }
 
+// make sure dst[count] is valid or else the program will segfault
 static void add_to(size_t* dst, const size_t* src, size_t count) {
     size_t carry = 0;
     for (size_t i = 0; i < count; ++i) {
@@ -265,6 +267,7 @@ static void add_to(size_t* dst, const size_t* src, size_t count) {
         dst[i] += tmp;
         carry = (tmp < carry) + (dst[i] < tmp);
     }
+    if (carry) dst[count] += carry;
 }
 
 // dst needs to be larger than src
@@ -278,7 +281,7 @@ static void subtract_from(size_t* dst, const size_t* src, size_t count) {
 }
 
 // x < y
-bool compare(const size_t* x, const size_t* y, const size_t count_x, const size_t count_y) {
+static bool compare(const size_t* x, const size_t* y, const size_t count_x, const size_t count_y) {
     if (count_x == count_y) {
         for (size_t i = 0; i < count_x; ++i) {
             if (x[i] == y[i]) continue;
@@ -321,6 +324,7 @@ big_int& big_int::operator+=(const big_int& other) {
     }
 
     if (m_count <= other.m_count) {
+        // alloc +1 in case of overflow
         realloc(other.m_count + 1);
     }
 
@@ -350,6 +354,7 @@ big_int& big_int::operator-=(const big_int& other) {
         // or
         // x - -y = x + y
         if (m_count <= other.m_count) {
+            // alloc +1 in case of overflow
             realloc(other.m_count + 1);
         }
 
@@ -373,9 +378,42 @@ big_int& big_int::operator-=(const big_int& other) {
     return *this;
 }
 
+#if SIZE_WIDTH > 32
+#ifdef _MSC_VER
+#include "intrin.h"
+#pragma intrinsic(_mul128)
+static void multiply_with_overflow(const size_t x, const size_t y, size_t* result_overflow, size_t* result) {
+    *result = _mul128(x, y, (__int64*)result_overflow);
+}
+#else
+static void multiply_with_overflow(const size_t x, const size_t y, size_t* result_overflow, size_t* result) {
+    __uint128_t prod = (__uint128_t)x * (__uint128_t)y;
+    *result_overflow = (size_t)(prod >> 64);
+    *result = (size_t)prod;
+}
+#endif
+#else
+static void multiply_with_overflow(const size_t x, const size_t y, size_t* result_overflow, size_t* result) {
+    uint64_t prod = (uint64_t)x * (uint64_t)y;
+    *result_overflow = (size_t)(prod >> 32);
+    *result = (size_t)prod;
+}
+#endif
+
 big_int& big_int::operator*=(const big_int& other) {
     size_t result_count = m_count + other.m_count;
-    size_t* result_data = new size_t[result_count];
+    size_t* result_data = new size_t[result_count]();
+
+    size_t product[2];
+    for (size_t i = 0; i < m_count; ++i) {
+        for (size_t j = 0; j < other.m_count; ++j) {
+            multiply_with_overflow(m_data[i], other.m_data[j], product + 1, product);
+
+            // add the product to the result
+            // use add_to function in case of overflow
+            add_to(result_data + i + j, product, 2);
+        }
+    }
 
     delete[] m_data;
     m_count = result_count;
