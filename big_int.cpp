@@ -283,7 +283,7 @@ static void subtract_from(size_t* dst, const size_t* src, size_t count) {
 // x < y
 static bool compare(const size_t* x, const size_t* y, const size_t count_x, const size_t count_y) {
     if (count_x == count_y) {
-        for (size_t i = 0; i < count_x; ++i) {
+        for (size_t i = std::min(count_x, count_y) - 1; i >= 0; --i) {
             if (x[i] == y[i]) continue;
             return x[i] < y[i];
         }
@@ -489,4 +489,48 @@ std::istream& operator>>(std::istream& is, big_int& x) {
 
 std::ostream& operator<<(std::ostream& os, const big_int& x) {
     return os;
+}
+
+big_int& big_int::operator>>=(const size_t n) {
+    return *this;
+}
+
+big_int& big_int::operator<<=(const size_t n) {
+    return *this;
+}
+
+big_int& big_int::operator^=(const big_int& other) {
+    if (m_count < other.m_count) {
+        realloc(other.m_count);
+    }
+
+    for (size_t i = 0; i < m_count; ++i) {
+        m_data[i] ^= other.m_data[i];
+    }
+
+    return *this;
+}
+
+big_int& big_int::operator|=(const big_int& other) {
+    if (m_count < other.m_count) {
+        realloc(other.m_count);
+    }
+
+    for (size_t i = 0; i < m_count; ++i) {
+        m_data[i] |= other.m_data[i];
+    }
+
+    return *this;
+}
+
+big_int& big_int::operator&=(const big_int& other) {
+    if (m_count < other.m_count) {
+        realloc(other.m_count);
+    }
+
+    for (size_t i = 0; i < m_count; ++i) {
+        m_data[i] &= other.m_data[i];
+    }
+
+    return *this;
 }
