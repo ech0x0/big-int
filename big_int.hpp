@@ -87,7 +87,6 @@ public:
 
     friend big_int operator>>(big_int x, const size_t n);
     friend big_int operator<<(big_int x, const size_t n);
-
     friend big_int operator^(big_int lhs, const big_int& rhs);
     friend big_int operator|(big_int lhs, const big_int& rhs);
     friend big_int operator&(big_int lhs, const big_int& rhs);

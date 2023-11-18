@@ -283,7 +283,8 @@ static void subtract_from(size_t* dst, const size_t* src, size_t count) {
 // x < y
 static bool compare(const size_t* x, const size_t* y, const size_t count_x, const size_t count_y) {
     if (count_x == count_y) {
-        for (size_t i = std::min(count_x, count_y) - 1; i >= 0; --i) {
+        // check from most significant byte to the least significant
+        for (size_t i = count_x - 1; i >= 0; --i) {
             if (x[i] == y[i]) continue;
             return x[i] < y[i];
         }
@@ -533,4 +534,29 @@ big_int& big_int::operator&=(const big_int& other) {
     }
 
     return *this;
+}
+
+big_int operator>>(big_int x, const size_t n) {
+    x >>= n;
+    return x;
+}
+
+big_int operator<<(big_int x, const size_t n) {
+    x <<= n;
+    return x;
+}
+
+big_int operator^(big_int lhs, const big_int& rhs) {
+    lhs ^= rhs;
+    return lhs;
+}
+
+big_int operator|(big_int lhs, const big_int& rhs) {
+    lhs &= rhs;
+    return lhs;
+}
+
+big_int operator&(big_int lhs, const big_int& rhs) {
+    lhs &= rhs;
+    return lhs;
 }
