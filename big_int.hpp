@@ -41,11 +41,11 @@ public:
     big_int& operator=(const char* str);
     big_int& operator=(const std::string& str);
 
-    const char* to_cstring();
-    std::string to_string();
+    const char* to_cstring() const;
+    std::string to_string() const;
 
     void set_to_binary_string(std::string str);
-    std::string to_binary_string();
+    std::string to_binary_string() const;
 
     long long to_llong();
     unsigned long long to_ullong();

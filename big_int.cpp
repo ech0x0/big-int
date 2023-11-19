@@ -74,7 +74,7 @@ big_int::big_int(const int x) {
 
     sign = (x < 0);
 
-    int abs_x = abs(x);
+    int abs_x = std::abs(x);
     memcpy(m_data, &abs_x, sizeof(int));
 }
 
@@ -93,7 +93,7 @@ big_int::big_int(const long x) {
 
     sign = (x < 0);
 
-    long abs_x = abs(x);
+    long abs_x = std::abs(x);
     memcpy(m_data, &abs_x, sizeof(long));
 }
 
@@ -112,7 +112,7 @@ big_int::big_int(const long long x) {
 
     sign = (x < 0);
 
-    long long abs_x = abs(x);
+    long long abs_x = std::abs(x);
     memcpy(m_data, &abs_x, sizeof(long long));
 }
 
@@ -125,6 +125,9 @@ big_int::big_int(const unsigned long long x) {
     memcpy(m_data, &x, sizeof(unsigned long long));
 }
 
+big_int::big_int(const std::string str) {
+}
+
 big_int& big_int::operator=(const int x) {
     delete[] m_data;
     m_data = new size_t[2]();
@@ -132,7 +135,7 @@ big_int& big_int::operator=(const int x) {
 
     sign = (x < 0);
 
-    int abs_x = abs(x);
+    int abs_x = std::abs(x);
     memcpy(m_data, &abs_x, sizeof(int));
 
     return *this;
@@ -157,7 +160,7 @@ big_int& big_int::operator=(const long x) {
 
     sign = (x < 0);
 
-    long abs_x = abs(x);
+    long abs_x = std::abs(x);
     memcpy(m_data, &abs_x, sizeof(long));
 
     return *this;
@@ -182,7 +185,7 @@ big_int& big_int::operator=(const long long x) {
 
     sign = (x < 0);
 
-    long long abs_x = abs(x);
+    long long abs_x = std::abs(x);
     memcpy(m_data, &abs_x, sizeof(long long));
 
     return *this;
@@ -198,6 +201,10 @@ big_int& big_int::operator=(const unsigned long long x) {
     memcpy(m_data, &x, sizeof(unsigned long long));
 
     return *this;
+}
+
+std::string big_int::to_string() const {
+    return std::string();
 }
 
 void big_int::set_to_binary_string(std::string str) {
@@ -218,7 +225,7 @@ void big_int::set_to_binary_string(std::string str) {
     }
 }
 
-std::string big_int::to_binary_string() {
+std::string big_int::to_binary_string() const {
     std::string str = (sign ? "-" : "");
     for (size_t i = m_count; i >= 1; --i) {
         for (size_t j = 64; j >= 1; --j) {
@@ -380,17 +387,38 @@ big_int& big_int::operator-=(const big_int& other) {
 }
 
 #if SIZE_WIDTH > 32
+#ifdef __SIZEOF_INT128__
 #ifdef _MSC_VER
 #include "intrin.h"
 #pragma intrinsic(_mul128)
 static void multiply_with_overflow(const size_t x, const size_t y, size_t* result_overflow, size_t* result) {
-    *result = _mul128(x, y, (__int64*)result_overflow);
+    *result = _umul128(x, y, (unsigned __uint64*)result_overflow);
 }
 #else
 static void multiply_with_overflow(const size_t x, const size_t y, size_t* result_overflow, size_t* result) {
     __uint128_t prod = (__uint128_t)x * (__uint128_t)y;
     *result_overflow = (size_t)(prod >> 64);
     *result = (size_t)prod;
+}
+#endif
+#else
+static void multiply_with_overflow(const size_t x, const size_t y, size_t* result_overflow, size_t* result) {
+    const size_t x_high = x >> 32;
+    const size_t x_low = (uint32_t)x;
+    const size_t y_high = y >> 32;
+    const size_t y_low = (uint32_t)y;
+
+    *result = y_low * x_low;
+
+    size_t tmp = y_low * x_high;
+    *result += size_t((uint32_t)tmp) << 32;
+    *result_overflow = (tmp >> 32) + (size_t((*result) >> 32) < size_t((uint32_t)tmp));
+
+    tmp = y_high * x_low;
+    *result += size_t((uint32_t)tmp) << 32;
+    *result_overflow += (tmp >> 32) + (size_t((*result) >> 32) < size_t((uint32_t)tmp));
+
+    *result_overflow += y_high * x_high;
 }
 #endif
 #else
@@ -485,14 +513,24 @@ std::istream& operator>>(std::istream& is, big_int& x) {
         is.setstate(std::ios::failbit);
     }
 
+    std::string str;
+    is >> str;
+    x = big_int(str);
+
     return is;
 }
 
 std::ostream& operator<<(std::ostream& os, const big_int& x) {
+    os << x.to_string();
     return os;
 }
 
 big_int& big_int::operator>>=(const size_t n) {
+    const size_t data_blocks_shift = n / sizeof(size_t);
+    const size_t data_shift = n % sizeof(size_t);
+
+    for (size_t i = 0; i < data_blocks_shift; ++i) {
+    }
     return *this;
 }
 
