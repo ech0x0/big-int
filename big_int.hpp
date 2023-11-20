@@ -13,7 +13,8 @@ private:
     size_t m_count;
     bool sign;
 
-    void realloc(size_t new_count);
+    void realloc(const size_t new_count);
+    void realloc(const size_t new_count, const unsigned int shift_new, const unsigned int shif_old);
 public:
     big_int();
     ~big_int();

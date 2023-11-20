@@ -3,10 +3,19 @@
 #include <limits.h>
 #include <string.h>
 
-void big_int::realloc(size_t new_count) {
-    m_count = new_count;
-    size_t* tmp = new size_t[m_count]();
+void big_int::realloc(const size_t new_count) {
+    size_t* tmp = new size_t[new_count]();
     memcpy(tmp, m_data, m_count * sizeof(size_t));
+    m_count = new_count;
+    delete[] m_data;
+    m_data = tmp;
+}
+
+void big_int::realloc(const size_t new_count, const unsigned int shift_new, const unsigned int shift_old) {
+    size_t* tmp = new size_t[new_count]();
+    size_t count_to_copy = std::min(m_count - shift_old, new_count - shift_new);
+    memcpy(tmp + shift_new, m_data + shift_old, count_to_copy * sizeof(size_t));
+    m_count = new_count;
     delete[] m_data;
     m_data = tmp;
 }
@@ -526,15 +535,34 @@ std::ostream& operator<<(std::ostream& os, const big_int& x) {
 }
 
 big_int& big_int::operator>>=(const size_t n) {
-    const size_t data_blocks_shift = n / sizeof(size_t);
-    const size_t data_shift = n % sizeof(size_t);
+    const size_t data_blocks_shift = std::max(n / (8 * sizeof(size_t)), (size_t)0);
+    const size_t data_shift = n % (8 * sizeof(size_t));
 
-    for (size_t i = 0; i < data_blocks_shift; ++i) {
+    realloc(m_count - data_blocks_shift, 0, data_blocks_shift);
+
+    m_data[0] >>= data_shift;
+    for (size_t i = 1; i < m_count; ++i) {
+        m_data[i - 1] |= m_data[i] << (sizeof(size_t) * 8 - data_shift);
+        m_data[i] >>= data_shift;
     }
+
     return *this;
 }
 
+#include <iostream>
+
 big_int& big_int::operator<<=(const size_t n) {
+    const size_t data_blocks_shift = n / (8 * sizeof(size_t));
+    const size_t data_shift = n % (8 * sizeof(size_t));
+
+    realloc(m_count + data_blocks_shift, data_blocks_shift, 0);
+
+    for (size_t i = m_count - 1; i > data_blocks_shift; --i) {
+        m_data[i] <<= data_shift;
+        m_data[i] |= m_data[i - 1] >> (sizeof(size_t) * 8 - data_shift);
+    }
+    m_data[data_blocks_shift] <<= data_shift;
+
     return *this;
 }
 
