@@ -474,6 +474,12 @@ big_int operator-(big_int lhs, const big_int& rhs) {
     return lhs;
 }
 
+big_int operator-(const big_int& x) {
+    big_int tmp(x);
+    tmp.sign = !tmp.sign;
+    return tmp;
+}
+
 big_int operator*(big_int lhs, const big_int& rhs) {
     lhs *= rhs;
     return lhs;
@@ -548,8 +554,6 @@ big_int& big_int::operator>>=(const size_t n) {
 
     return *this;
 }
-
-#include <iostream>
 
 big_int& big_int::operator<<=(const size_t n) {
     const size_t data_blocks_shift = n / (8 * sizeof(size_t));

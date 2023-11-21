@@ -63,6 +63,8 @@ public:
     friend big_int operator+(big_int lhs, const big_int& rhs);
     friend big_int operator-(big_int lhs, const big_int& rhs);
 
+    friend big_int operator-(const big_int& x);
+
     big_int& operator*=(const big_int& other);
     big_int& operator/=(const big_int& other);
 
