@@ -1,7 +1,10 @@
 #include "big_int.hpp"
 
-#include <limits.h>
+// memcpy
 #include <string.h>
+
+// uint32_t, uint64_t
+#include <cstdint>
 
 void big_int::realloc(const size_t new_count) {
     size_t* tmp = new size_t[new_count]();
@@ -395,7 +398,7 @@ big_int& big_int::operator-=(const big_int& other) {
     return *this;
 }
 
-#if SIZE_WIDTH > 32
+#if __WORDSIZE > 32
 #ifdef __SIZEOF_INT128__
 #ifdef _MSC_VER
 #include "intrin.h"

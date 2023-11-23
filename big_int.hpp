@@ -2,9 +2,15 @@
 #ifndef BIG_INT_HPP
 #define BIG_INT_HPP
 
+// std::string
 #include <string>
+
+// std::istream & std::ostream
 #include <istream>
 #include <ostream>
+
+// size_t
+#include <stddef.h>
 
 class big_int {
 private:
