@@ -21,6 +21,7 @@ private:
 
     void realloc(const size_t new_count);
     void realloc(const size_t new_count, const unsigned int shift_new, const unsigned int shif_old);
+    void normalize();
 public:
     big_int();
     ~big_int();

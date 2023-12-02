@@ -23,6 +23,19 @@ void big_int::realloc(const size_t new_count, const unsigned int shift_new, cons
     m_data = tmp;
 }
 
+void big_int::normalize() {
+    size_t original_m_count = m_count;
+    while (m_count > 1 && m_data[m_count - 1] == 0) {
+        --m_count;
+    }
+    if (m_count == original_m_count) return;
+
+    size_t* tmp = new size_t[m_count];
+    memcpy(tmp, m_data, m_count);
+    delete[] m_data;
+    m_data = tmp;
+}
+
 big_int::big_int() {
     m_data = new size_t[2]();
     m_count = 2;
@@ -215,10 +228,6 @@ big_int& big_int::operator=(const unsigned long long x) {
     return *this;
 }
 
-std::string big_int::to_string() const {
-    return std::string();
-}
-
 void big_int::set_to_binary_string(std::string str) {
     if (str.front() == '-') {
         sign = 1;
@@ -348,7 +357,7 @@ big_int& big_int::operator+=(const big_int& other) {
         realloc(other.m_count + 1);
     }
 
-    add_to(m_data, other.m_data, m_count);
+    add_to(m_data, other.m_data, other.m_count);
 
     return *this;
 }
@@ -378,7 +387,7 @@ big_int& big_int::operator-=(const big_int& other) {
             realloc(other.m_count + 1);
         }
 
-        add_to(m_data, other.m_data, m_count);
+        add_to(m_data, other.m_data, other.m_count);
 
         return *this;
     }
@@ -459,6 +468,8 @@ big_int& big_int::operator*=(const big_int& other) {
     delete[] m_data;
     m_count = result_count;
     m_data = result_data;
+
+    normalize();
 
     return *this;
 }
